@@ -22,12 +22,47 @@ var server = http.createServer(function(req, res) {
 
   req.on('end', function() {
     buffer += decoder.end()
-    res.end('Hello World!\n')
 
-    console.log('Request received with this payload: ', buffer)
+    var chosenHandler =
+      typeof router[trimmedPath] !== 'undefined'
+        ? router[trimmedPath]
+        : handlers.notFound
+
+    var data = {
+      trimmedPath,
+      queryStringObject,
+      method,
+      handlers,
+      payload: buffer,
+    }
+
+    chosenHandler(data, function(statusCode, payload) {
+      statusCode = typeof statusCode === 'number' ? statusCode : 200
+      payload = typeof payload === 'object' ? payload : {}
+
+      var payloadString = JSON.stringify(payload)
+
+      res.writeHead(statusCode)
+      res.end(payloadString)
+      console.log('Returning: ', statusCode, payloadString)
+    })
   })
 })
 
 server.listen(3000, function() {
   console.log('The server is listening on port 3000 now')
 })
+
+var handlers = {}
+
+handlers.sample = function(data, callback) {
+  callback(406, { name: 'sample handler' })
+}
+
+handlers.notFound = function(data, callback) {
+  callback(404)
+}
+
+var router = {
+  sample: handlers.sample,
+}
