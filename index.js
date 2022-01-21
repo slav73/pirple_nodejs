@@ -4,6 +4,11 @@ var url = require('url')
 var StringDecoder = require('string_decoder').StringDecoder
 var config = require('./config')
 var fs = require('fs')
+var _data = require('./lib/data')
+
+_data.delete('test', 'newFile', function(err) {
+  console.log('this was an error ', err)
+})
 
 var httpServer = http.createServer(function(req, res) {
   unifiedServer(req, res)
@@ -75,8 +80,8 @@ var unifiedServer = function(req, res) {
 
 var handlers = {}
 
-handlers.sample = function(data, callback) {
-  callback(406, { name: 'sample handler' })
+handlers.ping = function(data, callback) {
+  callback(200)
 }
 
 handlers.notFound = function(data, callback) {
@@ -84,5 +89,5 @@ handlers.notFound = function(data, callback) {
 }
 
 var router = {
-  sample: handlers.sample,
+  ping: handlers.ping,
 }
