@@ -62,8 +62,6 @@ var unifiedServer = function(req, res) {
     }
 
     chosenHandler(data, function(statusCode, payload) {
-      console.log('Payload ', payload)
-
       statusCode = typeof statusCode === 'number' ? statusCode : 200
       payload = typeof payload === 'object' ? payload : {}
 
