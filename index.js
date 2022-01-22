@@ -2,13 +2,10 @@ var http = require('http')
 var https = require('https')
 var url = require('url')
 var StringDecoder = require('string_decoder').StringDecoder
-var config = require('./config')
+var config = require('./lib/config')
 var fs = require('fs')
-var _data = require('./lib/data')
-
-_data.delete('test', 'newFile', function(err) {
-  console.log('this was an error ', err)
-})
+var handlers = require('./lib/handlers')
+var helpers = require('./lib/helpers')
 
 var httpServer = http.createServer(function(req, res) {
   unifiedServer(req, res)
@@ -61,10 +58,12 @@ var unifiedServer = function(req, res) {
       queryStringObject,
       method,
       handlers,
-      payload: buffer,
+      payload: helpers.parseJsonToObject(buffer),
     }
 
     chosenHandler(data, function(statusCode, payload) {
+      console.log('Payload ', payload)
+
       statusCode = typeof statusCode === 'number' ? statusCode : 200
       payload = typeof payload === 'object' ? payload : {}
 
@@ -78,16 +77,7 @@ var unifiedServer = function(req, res) {
   })
 }
 
-var handlers = {}
-
-handlers.ping = function(data, callback) {
-  callback(200)
-}
-
-handlers.notFound = function(data, callback) {
-  callback(404)
-}
-
 var router = {
   ping: handlers.ping,
+  users: handlers.users,
 }
