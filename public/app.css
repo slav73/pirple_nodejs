@@ -142,6 +142,18 @@ body.index .blurb {
   font-size: 14px;
 }
 
+.header ul li.loggedIn{
+  display: none;
+}
+
+body.loggedIn .header ul li.loggedIn{
+  display: inline-block;
+}
+
+body.loggedIn .header ul li.loggedOut{
+  display: none;
+}
+
 .ctaWrapper {
   text-align: center;
 }
@@ -173,6 +185,19 @@ button.cta:visited {
   background-color: #217844 !important;
 }
 
+.cta.red {
+  background-color: red !important;
+}
+
+.warning {
+  font-style: italic;
+  color: #c83737;
+  font-size: 17px;
+  text-align: center;
+  line-height: 150%;
+  padding: 0 0 20px 0;
+}
+
 /* Form Styling for Account Creation page and others */
 .formWrapper {
   margin: 0 auto;
@@ -183,6 +208,20 @@ button.cta:visited {
 .formError {
   display: none;
   background-color: #c83737;
+  font-style: italic;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin: 0 0 15px 0;
+  text-align: center;
+  border-color: #d87070;
+  border-width: 2px;
+  border-style: solid;
+}
+
+.formSuccess {
+  display: none;
+  background-color: green;
   font-style: italic;
   color: #fff;
   padding: 10px 15px;

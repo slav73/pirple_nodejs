@@ -6,7 +6,6 @@
 // Container for frontend application
 var app = {}
 
-console.log('Hello console world')
 // Config
 app.config = {
   sessionToken: false,
@@ -94,75 +93,405 @@ app.client.request = function(
   xhr.send(payloadString)
 }
 
-// // Bind the forms
-// app.bindForms = function() {
-//   document.querySelector("form").addEventListener("submit", function(e) {
-//     // Stop it from submitting
-//     e.preventDefault();
-//     var formId = this.id;
-//     var path = this.action;
-//     var method = this.method.toUpperCase();
+app.bindLogoutButton = function() {
+  document
+    .getElementById('logoutButton')
+    .addEventListener('click', function(e) {
+      e.preventDefault()
+      app.logUserOut()
+    })
+}
 
-//     // Hide the error message (if it's currently shown due to a previous error)
-//     document.querySelector("#" + formId + " .formError").style.display =
-//       "hidden";
+app.logUserOut = function() {
+  var tokenId =
+    typeof app.config.sessionToken.id === 'string'
+      ? app.config.sessionToken.id
+      : false
 
-//     // Turn the inputs into a payload
-//     var payload = {};
-//     var elements = this.elements;
-//     for (var i = 0; i < elements.length; i++) {
-//       if (elements[i].type !== "submit") {
-//         var valueOfElement =
-//           elements[i].type == "checkbox"
-//             ? elements[i].checked
-//             : elements[i].value;
-//         payload[elements[i].name] = valueOfElement;
-//       }
-//     }
+  var queryStringObject = {
+    id: tokenId,
+  }
 
-//     // Call the API
-//     app.client.request(undefined, path, method, undefined, payload, function(
-//       statusCode,
-//       responsePayload
-//     ) {
-//       console.log(responsePayload);
-//       // Display an error on the form if needed
-//       if (statusCode !== 200) {
-//         // Try to get the error from the api, or set a default error message
-//         var error =
-//           typeof responsePayload.Error == "string"
-//             ? responsePayload.Error
-//             : "An error has occured, please try again";
+  app.client.request(
+    undefined,
+    'api/tokens',
+    'DELETE',
+    queryStringObject,
+    undefined,
+    function() {
+      app.setSessionToken(false)
+      localStorage.removeItem('token')
+      window.location = '/session/deleted'
+    }
+  )
+}
 
-//         // Set the formError field with the error text
-//         document.querySelector("#" + formId + " .formError").innerHTML = error;
+app.deleteUser = function() {
+  var phone =
+    typeof app.config.sessionToken.phone === 'string'
+      ? app.config.sessionToken.phone
+      : false
 
-//         // Show (unhide) the form error field on the form
-//         document.querySelector("#" + formId + " .formError").style.display =
-//           "block";
-//       } else {
-//         // If successful, send to form response processor
-//         app.formResponseProcessor(formId, payload, responsePayload);
-//       }
-//     });
-//   });
-// };
+  var queryStringObject = {
+    phone,
+  }
 
-// // Form response processor
-// app.formResponseProcessor = function(formId, requestPayload, responsePayload) {
-//   var functionToCall = false;
-//   if (formId == "accountCreate") {
-//     // @TODO Do something here now that the account has been created successfully
-//   }
-// };
+  app.client.request(
+    undefined,
+    'api/users',
+    'DELETE',
+    queryStringObject,
+    undefined,
+    function(statusCode, responsePayload) {
+      app.setSessionToken(false)
+      localStorage.removeItem('token')
+      window.location = '/account/deleted'
+    }
+  )
+}
 
-// // Init (bootstrapping)
-// app.init = function() {
-//   // Bind all form submissions
-//   app.bindForms();
-// };
+// Bind the forms
+app.bindForms = function() {
+  var forms = document.querySelectorAll('form')
+  if (forms) {
+    forms.forEach((form) => {
+      document
+        .querySelector('#' + form.id)
+        .addEventListener('submit', function(e) {
+          // Stop it from submitting
+          e.preventDefault()
+          var formId = this.id
+          var path = this.action
+          var method =
+            this.id === 'accountEdit1' || this.id === 'accountEdit2'
+              ? 'PUT'
+              : this.method.toUpperCase()
+          if (this.id === 'accountEdit3') method = 'DELETE'
 
-// // Call the init processes after the window loads
-// window.onload = function() {
-//   app.init();
-// };
+          // Hide the error message (if it's currently shown due to a previous error)
+          document.querySelector('#' + formId + ' .formError').style.display =
+            'hidden'
+
+          // Turn the inputs into a payload
+          var payload = {}
+          var elements = this.elements
+          for (var i = 0; i < elements.length; i++) {
+            if (elements[i].type !== 'submit') {
+              var valueOfElement =
+                elements[i].type == 'checkbox'
+                  ? elements[i].checked
+                  : elements[i].value
+              payload[elements[i].name] = valueOfElement
+            }
+          }
+
+          // Call the API
+          app.client.request(
+            undefined,
+            path,
+            method,
+            undefined,
+            payload,
+            function(statusCode, responsePayload) {
+              // Display an error on the form if needed
+              if (statusCode !== 200) {
+                // Try to get the error from the api, or set a default error message
+                var error =
+                  typeof responsePayload.Error == 'string'
+                    ? responsePayload.Error
+                    : 'An error has occured, please try again'
+
+                // Set the formError field with the error text
+                document.querySelector(
+                  '#' + formId + ' .formError'
+                ).innerHTML = error
+
+                // Show (unhide) the form error field on the form
+                document.querySelector(
+                  '#' + formId + ' .formError'
+                ).style.display = 'block'
+              } else {
+                // If successful, send to form response processor
+                app.formResponseProcessor(formId, payload, responsePayload)
+              }
+            }
+          )
+        })
+    })
+  }
+}
+
+// Form response processor
+app.formResponseProcessor = function(formId, requestPayload, responsePayload) {
+  var functionToCall = false
+
+  if (formId == 'accountCreate') {
+    var newPayload = {
+      phone: requestPayload.phone,
+      password: requestPayload.password,
+    }
+
+    app.client.request(
+      undefined,
+      'api/tokens',
+      'POST',
+      undefined,
+      newPayload,
+      function(newStatusCode, newResponsePayload) {
+        if (newStatusCode !== 200) {
+          document.querySelector('#' + formId + ' .formError').innerHTML =
+            'Account create: Sorry, an error occured'
+          document.querySelector('#' + formId + ' .formError').style.display =
+            'block'
+        } else {
+          app.setSessionToken(newResponsePayload)
+          window.location = '/checks/all'
+        }
+      }
+    )
+  }
+
+  if (formId === 'sessionCreate') {
+    app.setSessionToken(responsePayload)
+    window.location = '/checks/all'
+  }
+
+  if (formId === 'accountEdit1') {
+    var newPayload = {
+      phone: requestPayload.phone,
+      firstName: requestPayload.firstName,
+      lastName: requestPayload.lastName,
+    }
+    var queryString = {
+      phone: requestPayload.phone,
+    }
+
+    app.client.request(
+      undefined,
+      'api/users',
+      'GET',
+      queryString,
+      newPayload,
+      function(newStatusCode, newResponsePayload) {
+        if (newStatusCode !== 200) {
+          document.querySelector('#' + formId + ' .formError').innerHTML =
+            'Edit account: Sorry, an error occured'
+          document.querySelector('#' + formId + ' .formError').style.display =
+            'block'
+        } else {
+          document.querySelector('#' + formId + ' .formSuccess').innerHTML =
+            'Successfully changed User data'
+          document.querySelector('#' + formId + ' .formSuccess').style.display =
+            'block'
+          app.setSessionToken(app.config.sessionToken)
+        }
+      }
+    )
+  }
+
+  if (formId === 'accountEdit2') {
+    var newPayload = {
+      phone: requestPayload.phone,
+      password: requestPayload.password,
+    }
+    var queryString = {
+      phone: requestPayload.phone,
+    }
+    app.client.request(
+      undefined,
+      'api/users',
+      'GET',
+      queryString,
+      newPayload,
+      function(newStatusCode, newResponsePayload) {
+        if (newStatusCode !== 200) {
+          document.querySelector('#' + formId + ' .formError').innerHTML =
+            'Password change: Sorry, an error occured'
+          document.querySelector('#' + formId + ' .formError').style.display =
+            'block'
+        } else {
+          document.querySelector('#' + formId + ' .formSuccess').innerHTML =
+            'Successfully changed password'
+          document.querySelector('#' + formId + ' .formSuccess').style.display =
+            'block'
+          app.setSessionToken(app.config.sessionToken)
+        }
+      }
+    )
+  }
+
+  if (formId === 'accountEdit3') {
+    var newPayload = {
+      phone: requestPayload.phone,
+    }
+
+    app.client.request(
+      undefined,
+      'api/users',
+      'GET',
+      newPayload,
+      newPayload,
+      function(newStatusCode) {
+        if (newStatusCode !== 404) {
+          document.querySelector('#' + formId + ' .formError').innerHTML =
+            'Deleting user: Sorry, an error occured'
+          document.querySelector('#' + formId + ' .formError').style.display =
+            'block'
+        } else {
+          window.location = '/account/deleted'
+        }
+      }
+    )
+  }
+}
+
+app.getSessionToken = function() {
+  var tokenString = localStorage.getItem('token')
+  if (typeof tokenString === 'string') {
+    try {
+      var token = JSON.parse(tokenString)
+      app.config.sessionToken = token
+      if (typeof token === 'object') {
+        app.setLoggedInClass(true)
+      } else {
+        app.setLoggedInClass(false)
+      }
+    } catch (e) {
+      app.config.sessionToken = false
+      app.setLoggedInClass(false)
+    }
+  }
+}
+
+app.setLoggedInClass = function(add) {
+  var target = document.querySelector('body')
+  if (add) {
+    target.classList.add('loggedIn')
+  } else {
+    target.classList.remove('loggedIn')
+  }
+}
+
+app.setSessionToken = function(token) {
+  app.config.sessionToken = token
+  var tokenString = JSON.stringify(token)
+  localStorage.setItem('token', tokenString)
+  if (typeof token === 'object') {
+    app.setLoggedInClass(true)
+  } else {
+    app.setLoggedInClass(false)
+  }
+}
+
+app.renewToken = function(callback) {
+  var currentToken =
+    typeof app.config.sessionToken === 'object'
+      ? app.config.sessionToken
+      : false
+  if (currentToken) {
+    var queryStringObject = {
+      id: currentToken.id,
+      extend: true,
+    }
+
+    app.client.request(
+      undefined,
+      'api/tokens',
+      'GET',
+      queryStringObject,
+      undefined,
+      function(statusCode, responsePayload) {
+        if (statusCode === 200) {
+          app.setSessionToken(responsePayload)
+          callback(false)
+        } else {
+          app.setSessionToken(false)
+          callback(true)
+        }
+      }
+    )
+  } else {
+    app.setSessionToken(false)
+    callback(true)
+  }
+}
+
+app.loadDataOnPage = function() {
+  var bodyClasses = document.querySelector('body').classList
+  var primaryClass = typeof bodyClasses[0] === 'string' ? bodyClasses[0] : false
+
+  if (primaryClass === 'accountEdit') {
+    app.loadAccountEditPage()
+  }
+}
+
+app.loadAccountEditPage = function() {
+  var phone =
+    typeof app.config.sessionToken.phone === 'string'
+      ? app.config.sessionToken.phone
+      : false
+  if (phone) {
+    var queryStringObject = {
+      phone,
+    }
+
+    app.client.request(
+      undefined,
+      'api/users',
+      'GET',
+      queryStringObject,
+      undefined,
+      function(statusCode, responsePayload) {
+        if (statusCode === 200) {
+          document.querySelector('#accountEdit1 .firstNameInput').value =
+            responsePayload.firstName
+          document.querySelector('#accountEdit1 .lastNameInput').value =
+            responsePayload.lastName
+          document.querySelector('#accountEdit1 .displayPhoneInput').value =
+            responsePayload.phone
+
+          var hiddenPhoneInputs = document.querySelectorAll(
+            'input.hiddenPhoneNumberInput'
+          )
+
+          for (var i = 0; i < hiddenPhoneInputs.length; i++) {
+            hiddenPhoneInputs[i].value = responsePayload.phone
+          }
+        } else {
+          app.logUserOut()
+        }
+      }
+    )
+  } else {
+    app.logUserOut()
+  }
+}
+
+app.tokenRenewalLoop = function() {
+  setInterval(function() {
+    app.renewToken(function(err) {
+      if (!err) {
+        console.log('Token renewed successfully @' + Date.now())
+      }
+    })
+  }, 1000 * 60)
+}
+
+// Init (bootstrapping)
+app.init = function() {
+  // Bind all form submissions
+  app.bindForms()
+
+  app.bindLogoutButton()
+
+  app.getSessionToken()
+
+  app.tokenRenewalLoop()
+
+  app.loadDataOnPage()
+}
+
+// Call the init processes after the window loads
+window.onload = function() {
+  app.init()
+}
