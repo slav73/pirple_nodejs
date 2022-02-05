@@ -1,0 +1,20 @@
+<h1>Dashboard</h1>
+
+<hr />
+
+<table id="checksListTable" action="/api/checks" method="GET">
+  <tr>
+    <td>Method</td>
+    <td>Protocol</td>
+    <td>URL</td>
+    <td>State</td>
+    <td>Details</td>
+  </tr>
+  <tr id="noChecksMessage">
+    <td colspan="5">You have no checks, please create one</td>
+  </tr>
+</table>
+
+<div id="createCheckCTA" class="ctaWrapper">
+  <a href="checks/create" class="cta green">Create a Check</a>
+</div>

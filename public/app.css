@@ -240,6 +240,27 @@ input {
   width: 100%;
 }
 
+input, select, option {
+  border-width: 1px;
+  border-radius: 2px;
+  padding: 7px 1%;
+  width: 100%;
+}
+
+.checkboxGroup {
+  display: flex;
+}
+
+.checkboxGroup input, select {
+  display: inline-block;
+  width: initial;
+  margin: 20px;
+}
+
+input.disabled {
+  background-color: #efefef;
+}
+
 .inputWrapper {
   padding: 0 0 20px 0;
 }
@@ -247,4 +268,51 @@ input {
 .inputLabel {
   padding: 0 0 5px 0;
   color: #808080;
+}
+
+table {
+  width: 100%;
+}
+
+tr {
+  width: 100%;
+}
+
+th {
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 10px;
+  border-color: #000;
+  border-style: dotted;
+  padding: 10px;
+  margin: 0 0 10px 0;
+  background-color: #efefef;  
+}
+
+td {
+  padding: 10px;
+}
+
+td a, td a:hover, td a:active {
+  color: #2e5fa8;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Page specific styles for dashboard */
+
+#noChecksMessage td {
+  text-align: center;
+  font-style: italic;
+  font-size: 20px;
+  padding: 20px;
+}
+
+#noChecksMessage {
+  display: none;
+}
+
+#createCheckCTA {
+  margin-top: 40px;
+  display: none;
 }

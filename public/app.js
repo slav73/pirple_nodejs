@@ -163,7 +163,9 @@ app.bindForms = function() {
           var formId = this.id
           var path = this.action
           var method =
-            this.id === 'accountEdit1' || this.id === 'accountEdit2'
+            this.id === 'accountEdit1' ||
+            this.id === 'accountEdit2' ||
+            this.id === 'checksEdit1'
               ? 'PUT'
               : this.method.toUpperCase()
           if (this.id === 'accountEdit3') method = 'DELETE'
@@ -175,16 +177,22 @@ app.bindForms = function() {
           // Turn the inputs into a payload
           var payload = {}
           var elements = this.elements
+          payload.successCodes = []
           for (var i = 0; i < elements.length; i++) {
             if (elements[i].type !== 'submit') {
-              var valueOfElement =
-                elements[i].type == 'checkbox'
-                  ? elements[i].checked
-                  : elements[i].value
-              payload[elements[i].name] = valueOfElement
+              if (elements[i].name === 'successCodes' && elements[i].checked) {
+                console.log('Checked selection', elements[i].value)
+                payload.successCodes.push(elements[i].value)
+              } else {
+                if (elements[i].name !== 'successCodes') {
+                  payload[elements[i].name] = elements[i].value
+                }
+              }
             }
           }
+          console.log('Payload: ', payload)
 
+          // payload.timeoutSeconds = 2
           // Call the API
           app.client.request(
             undefined,
@@ -193,6 +201,7 @@ app.bindForms = function() {
             undefined,
             payload,
             function(statusCode, responsePayload) {
+              console.log('Payload: ', responsePayload)
               // Display an error on the form if needed
               if (statusCode !== 200) {
                 // Try to get the error from the api, or set a default error message
@@ -343,6 +352,10 @@ app.formResponseProcessor = function(formId, requestPayload, responsePayload) {
       }
     )
   }
+
+  if (formId == 'checksCreate') {
+    window.location = '/checks/all'
+  }
 }
 
 app.getSessionToken = function() {
@@ -423,6 +436,14 @@ app.loadDataOnPage = function() {
   if (primaryClass === 'accountEdit') {
     app.loadAccountEditPage()
   }
+
+  if (primaryClass === 'checksList') {
+    app.loadChecksListPage()
+  }
+
+  if (primaryClass === 'checksEdit') {
+    app.loadChecksEditPage()
+  }
 }
 
 app.loadAccountEditPage = function() {
@@ -464,6 +485,152 @@ app.loadAccountEditPage = function() {
     )
   } else {
     app.logUserOut()
+  }
+}
+
+app.loadChecksListPage = function() {
+  var phone =
+    typeof app.config.sessionToken.phone === 'string'
+      ? app.config.sessionToken.phone
+      : false
+  if (phone) {
+    var queryStringObject = {
+      phone,
+    }
+    app.client.request(
+      undefined,
+      'api/users',
+      'GET',
+      queryStringObject,
+      undefined,
+      function(statusCode, responsePayload) {
+        if (statusCode === 200) {
+          var allChecks =
+            typeof responsePayload.checks === 'object'
+              ? responsePayload.checks
+              : false
+
+          if (allChecks.length > 0) {
+            allChecks.forEach(function(checkId) {
+              var newQueryStringObject = {
+                id: checkId,
+              }
+              app.client.request(
+                undefined,
+                'api/checks',
+                'GET',
+                newQueryStringObject,
+                undefined,
+                function(statusCode, responsePayload) {
+                  if (statusCode === 200) {
+                    var checkData = responsePayload
+
+                    var table = document.getElementById('checksListTable')
+                    var tr = table.insertRow(-1)
+                    tr.classList.add('checkRow')
+                    var td0 = tr.insertCell(0)
+                    var td1 = tr.insertCell(1)
+                    var td2 = tr.insertCell(2)
+                    var td3 = tr.insertCell(3)
+                    var td4 = tr.insertCell(4)
+
+                    td0.innerHTML = responsePayload.method.toUpperCase()
+                    td1.innerHTML = responsePayload.protocol + '://'
+                    td2.innerHTML = responsePayload.url
+                    var state =
+                      typeof responsePayload.state === 'string'
+                        ? responsePayload.state
+                        : ''
+                    td3.innerHTML = state
+                    td4.innerHTML =
+                      '<a href="checks/edit?id=' +
+                      responsePayload.id +
+                      '">View</a> / <a href="checks/edit?id=' +
+                      responsePayload.id +
+                      '">Edit</a> / <a href="checks/edit?id=' +
+                      responsePayload.id +
+                      '">Delete</a>'
+                  } else {
+                    console.log('Error trying to load check ID: ', checkId)
+                  }
+                }
+              )
+            })
+
+            if (allChecks.length < 5) {
+              document.getElementById('createCheckCTA').style.display = 'block'
+            }
+          } else {
+            document.getElementById('noChecksMessage').style.display =
+              'table-row'
+            document.getElementById('createCheckCTA').style.display = 'block'
+          }
+        } else {
+          app.logUserOut()
+        }
+      }
+    )
+  } else {
+    app.logUserOut()
+  }
+}
+
+app.loadChecksEditPage = function() {
+  var id =
+    typeof window.location.href.split('=')[1] === 'string' &&
+    window.location.href.trim().length > 0
+      ? window.location.href.split('=')[1].trim()
+      : false
+  console.log('Checks edit: ', id)
+  if (id) {
+    var queryStringObject = { id }
+
+    app.client.request(
+      undefined,
+      'api/checks',
+      'GET',
+      queryStringObject,
+      undefined,
+      function(statusCode, responsePayload) {
+        if (statusCode === 200) {
+          var hiddenInputs = document.querySelectorAll('input.hiddenInput')
+          for (var i = 0; i < hiddenInputs.length; i++) {
+            hiddenInputs[i].value = responsePayload.id
+          }
+
+          document.querySelector('#checksEdit1 .displayIdInput').value =
+            responsePayload.id
+          document.querySelector('#checksEdit1 .displayStateInput').value =
+            responsePayload.state
+          document.querySelector('#checksEdit1 .protocolInput').value =
+            responsePayload.protocol
+          document.querySelector('#checksEdit1 .urlInput').value =
+            responsePayload.url
+          document.querySelector('#checksEdit1 [name=httpmethod]').value =
+            responsePayload.method
+          document.querySelector('#checksEdit1 [name=timeoutSeconds]').value =
+            responsePayload.timeoutSeconds
+
+          var successCodeCheckboxes = document.querySelectorAll(
+            '#checksEdit1 input[name=successCodes]'
+          )
+
+          for (var i = 0; i < successCodeCheckboxes.length; i++) {
+            if (
+              responsePayload.successCodes.indexOf(
+                successCodeCheckboxes[i].value
+              ) > -1
+            ) {
+              successCodeCheckboxes[i].checked = true
+            }
+          }
+        } else {
+          window.location = '/checks/all'
+        }
+      }
+    )
+  } else {
+    window.location = '/checks/all'
   }
 }
 

@@ -1,0 +1,20 @@
+<h1>Dashboard</h1>
+
+<hr />
+
+<table id="ordersListTable" action="/api/orders" method="GET">
+  <tr>
+    <td>Date</td>
+    <td>Pizzas ordered</td>
+    <td>Total Sum</td>
+    <td>State</td>
+    <td>Details</td>
+  </tr>
+  <tr id="noOrdersMessage">
+    <td colspan="5">You have no orders, please create one</td>
+  </tr>
+</table>
+
+<div id="createOrderCTA" class="ctaWrapper">
+  <a href="orders/create" class="cta green">Create an Order</a>
+</div>
