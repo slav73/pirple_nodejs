@@ -1,1 +1,1 @@
-{"id":"bb7405c5529113cb75c2","userPhone":"4151234548","protocol":"http","url":"creyda.ru","method":"post","successCodes":["200","201"],"timeoutSeconds":1,"state":"down","lastChecked":1644044195673}
+{"id":"bb7405c5529113cb75c2","userPhone":"4151234548","protocol":"http","url":"creyda.ru","method":"post","successCodes":["200","201","301","302"],"timeoutSeconds":1,"state":"up","lastChecked":1644212363872}
