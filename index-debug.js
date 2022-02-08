@@ -1,22 +1,27 @@
 var server = require('./lib/server')
 var workers = require('./lib/workers')
 var cli = require('./lib/cli')
+var example = require('./lib/exampleDebuggingProblem')
 
 var app = {}
 
-app.init = function(callback) {
+app.init = function() {
   server.init()
 
   workers.init()
 
   setTimeout(function() {
     cli.init()
-    callback()
   }, 50)
+
+  var foo = 1
+  foo++
+  foo = foo * foo
+  foo = foo.toString()
+
+  example.init()
 }
 
-if (require.main === module) {
-  app.init(function() {})
-}
+app.init()
 
 module.exports = app
