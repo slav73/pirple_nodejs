@@ -1,1 +1,1 @@
-{"id":"989d712d3dbbbca70a36","userPhone":"4151234548","protocol":"http","url":"nakorte.ru","method":"get","successCodes":["200","201","301","302"],"timeoutSeconds":2,"state":"up","lastChecked":1644267317261}
+{"id":"989d712d3dbbbca70a36","userPhone":"4151234548","protocol":"http","url":"nakorte.ru","method":"get","successCodes":["200","201","301","302"],"timeoutSeconds":2,"state":"down","lastChecked":1644494577158}
